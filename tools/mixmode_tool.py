@@ -27,3 +27,27 @@ class MixmodeTool(SecurityTool):
             },
             message="Mixmode tool initialized.",
         )
+
+@staticmethod
+def tool_schema() -> dict[str, Any]:
+    return {
+        "type": "function",
+        "function": {
+            "name": "mixmode_log_query",
+            "description": "Query Mixmode for event or log data to support incident investigation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The Mixmode search query or event filter.",
+                    },
+                    "time_range": {
+                        "type": "string",
+                        "description": "Relative time range, e.g. -24h or -7d.",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    }
