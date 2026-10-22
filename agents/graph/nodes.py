@@ -48,7 +48,9 @@ def investigate_incident(state: AgentState) -> AgentState:
     
     analysis = await provider.invoke(
         system_prompt=system_prompt,
-        input=input
+        input=input,
+        tools=tools,
+        tool_choice="auto"
     )
 
     parsed = json.loads(analysis)
