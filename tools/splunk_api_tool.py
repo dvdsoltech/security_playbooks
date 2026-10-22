@@ -14,7 +14,7 @@ class SplunkApiTool(SecurityTool):
     def __init__(self):
         super().__init__(
             name="splunk_api",
-            base_url=os.getenv("SPLUNK_API_URL"),
+            base_url=os.getenv("SPLUNK_API_BASE_URL"),
         )
         self.token = os.getenv("SPLUNK_API_TOKEN")
         self.session = None
@@ -57,14 +57,21 @@ class SplunkApiTool(SecurityTool):
         if not isinstance(payload, dict):
             return ToolResult(success=False, data={}, message="payload must be a JSON object.")
 
+        if not self.base_url:
+            return ToolResult(
+                success=False,
+                data={},
+                message="SPLUNK_API_BASE_URL is not configured.",
+            )
+
         if not self.token:
             return ToolResult(
                 success=False,
                 data={},
-                message="SPLUNK_API_TOKEN is required.",
+                message="SPLUNK_API_TOKEN is not configured.",
             )
 
-        endpoint = f"{self.base_url.rstrip('/')}/servicesNS/search/json/{collection}"
+        endpoint = f"{self.base_url.rstrip('/')}/{collection}"
 
         try:
             if self.session is None:
