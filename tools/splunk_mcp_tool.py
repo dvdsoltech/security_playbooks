@@ -7,11 +7,7 @@ from tools.base_tool import SecurityTool, ToolResult
 
 
 class SplunkMcpTool(SecurityTool):
-    """Wrapper for the Splunk remote MCP server.
-
-    This class creates the exact config/command pattern that Splunk expects
-    for mcp-remote, while still fitting the repo's tool interface.
-    """
+    """Wrapper for the Splunk remote MCP server."""
 
     def __init__(self):
         super().__init__(name="splunk_mcp", base_url=os.getenv("SPLUNK_MCP_ENDPOINT"))
@@ -45,24 +41,6 @@ class SplunkMcpTool(SecurityTool):
             command.extend(["--header", f"Authorization: Bearer {self.token}"])
         return command
 
-    async def execute(self, *args, **kwargs) -> ToolResult:
-        """Return the resolved MCP config and command for the client."""
-        config = self.as_mcp_config()
-        return ToolResult(
-            success=True,
-            data={
-                "server_name": self.server_name,
-                "endpoint": self.endpoint,
-                "command": self.build_command(),
-                "mcp_config": config,
-                "note": (
-                    "This tool prepares and validates the Splunk MCP bridge. "
-                    "A separate MCP client library is still needed to actually execute tools."
-                ),
-            },
-            message="Splunk MCP bridge configuration ready.",
-        )
-        
     @staticmethod
     def tool_schema() -> dict[str, Any]:
         return {
@@ -75,15 +53,15 @@ class SplunkMcpTool(SecurityTool):
                     "properties": {
                         "operation": {
                             "type": "string",
-                            "description": "The Splunk MCP operation to execute, e.g. search, lookup, query, kvstore_read.",
+                            "description": "The Splunk MCP tool name to call, for example: search, lookup, kvstore_read, or another supported operation.",
                         },
                         "query": {
                             "type": "string",
-                            "description": "The primary Splunk command or query payload.",
+                            "description": "The primary query or command payload accepted by the remote MCP tool.",
                         },
                         "arguments": {
                             "type": "object",
-                            "description": "Optional free-form arguments for the specific operation, such as earliest, latest, fields, collection, record_id, or filters.",
+                            "description": "Optional additional arguments to pass to the MCP tool.",
                             "additionalProperties": True,
                         },
                     },
@@ -91,3 +69,86 @@ class SplunkMcpTool(SecurityTool):
                 },
             },
         }
+
+    async def execute(
+        self,
+        operation: str,
+        query: str,
+        arguments: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> ToolResult:
+        """Initialize the MCP client, create a session, call the remote tool, and return the payload."""
+        if not operation:
+            return ToolResult(success=False, data={}, message="operation is required.")
+
+        if not query:
+            return ToolResult(success=False, data={}, message="query is required.")
+
+        if not self.endpoint:
+            return ToolResult(
+                success=False,
+                data={},
+                message="SPLUNK_MCP_ENDPOINT is not configured.",
+            )
+
+        try:
+            try:
+                from mcp import StdioServerParameters
+                from mcp.client.session import ClientSession
+                from mcp.client.stdio import stdio_client
+            except ImportError as exc:  # pragma: no cover
+                raise RuntimeError(
+                    "The MCP Python client library is required for Splunk MCP execution. "
+                    "Install the `mcp` package."
+                ) from exc
+
+            args = ["-y", "mcp-remote", self.endpoint]
+
+            if self.token:
+                args.extend(["--header", f"Authorization: Bearer {self.token}"])
+
+            server_params = StdioServerParameters(
+                command="npx",
+                args=args,
+            )
+
+            payload = {"query": query}
+            if arguments:
+                payload.update(arguments)
+
+            async with stdio_client(server_params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+
+                    result = await session.call_tool(operation, payload)
+
+                    payload_result = None
+                    if hasattr(result, "model_dump"):
+                        payload_result = result.model_dump()
+                    elif hasattr(result, "dict"):
+                        payload_result = result.dict()
+                    else:
+                        payload_result = result
+
+                    return ToolResult(
+                        success=True,
+                        data={
+                            "operation": operation,
+                            "query": query,
+                            "arguments": payload,
+                            "result": payload_result,
+                            "endpoint": self.endpoint,
+                        },
+                        message="Splunk MCP tool executed successfully.",
+                    )
+
+        except Exception as exc:  # pragma: no cover
+            return ToolResult(
+                success=False,
+                data={
+                    "operation": operation,
+                    "query": query,
+                    "arguments": arguments or {},
+                },
+                message=f"Splunk MCP tool execution failed: {exc}",
+            )
