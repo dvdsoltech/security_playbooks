@@ -28,16 +28,19 @@ async def assign_incident(state: AgentState) -> AgentState:
     system_prompt = Path(PROMPT_ROOT / "assignment_prompt.md").read_text(encoding="utf-8")
     user_message = json.dumps(alert_payload or {}, default=str, sort_keys=True)
 
-    decision = await provider.invoke(
+    response = await provider.invoke(
         system_prompt=system_prompt,
         user_message=user_message
     )
-    parsed = json.loads(decision)
-    playbook = parsed.get("playbook", "").strip().lower()
-    rationale = parsed.get("rationale", "").strip()
+    if isinstance(response, str):
+        response = AIMessage(content=response)
+
+    state.messages.append(response)
     
-    state.playbook = playbook
-    state.rationale = rationale
+    parsed = json.loads(response.content) if isinstance(response.content, str) and response.content.strip().startswith("{") else {}
+    
+    state.playbook = parsed.get("playbook", "").strip().lower()
+    state.rationale = parsed.get("rationale", "").strip()
     state.status = "assignment"
     state.next_step = "Proceed with the appropriate security playbook to the reported security event"
     return state
@@ -58,21 +61,23 @@ async def investigate_incident(state: AgentState) -> AgentState:
     system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
     user_message = json.dumps(alert_payload, default=str, sort_keys=True)
     
-    analysis = await provider.invoke(
+    response = await provider.invoke(
         system_prompt=system_prompt,
         user_message=user_message,
         tools=tools,
-        tool_choice="auto"
+        tool_choice="auto",
     )
     
     # Store the tool call payload the graph will route on
     # This depends on how your provider returns tool_calls.
-    if isinstance(analysis, dict):
-        state.tool_calls = analysis.get("tool_calls", [])
-        
+    if isinstance(response, str):
+        response = AIMessage(content=response)
+    state.messages.append(response)
+    
     # The provider may return a plain text response or a tool-call result.
     # If it returns tool calls, execute them and feed the result back to the model.
-    parsed = json.loads(analysis) if isinstance(analysis, str) and analysis.strip().startswith("{") else {}
+    
+    parsed = json.loads(response.content) if isinstance(response.content, str) and response.content.strip().startswith("{") else {}
     state.quality_check = parsed.get("quality_check", "").strip()
     state.recommendations = parsed.get("recommendations", "").strip()
     state.findings = parsed.get("findings", "").strip()
@@ -83,27 +88,27 @@ async def investigate_incident(state: AgentState) -> AgentState:
 
 
 async def tool_node(state: AgentState) -> AgentState:
-    """Execute any tool calls emitted by the model during investigation."""
+    """Execute tool calls emitted by the model."""
     tool_map = register_tools()
 
-    # This assumes the model output is structured as tool_calls.
-    # If you are using LangGraph message-based state, this would typically read from
-    # state.messages[-1].tool_calls instead.
-    tool_calls = getattr(state, "tool_calls", None) or []
-
-    if not tool_calls:
+    if not state.messages:
         return state
 
-    for call in tool_calls:
+    last_message = state.messages[-1]
+
+    if not getattr(last_message, "tool_calls", None):
+        return state
+
+    for call in last_message.tool_calls:
         tool_name = call.get("name")
-        arguments = call.get("args", {}) or {}
+        args = call.get("args", {}) or {}
 
         if tool_name not in tool_map:
             state.errors.append(f"Unknown tool requested: {tool_name}")
             continue
 
         tool = tool_map[tool_name]
-        result = await tool.execute(**arguments)
+        result = await tool.execute(**args)
 
         if result.success:
             state.evidence.append(
