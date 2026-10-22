@@ -13,6 +13,7 @@ class AgentState:
     severity: Literal["low", "medium", "high", "critical"] = "medium"
     raw_alert: dict[str, Any] | None = None
     source: str | None = None
+    messages: list[BaseMessage] = field(default_factory=list)
     evidence: list[dict[str, Any]] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
     actions_taken: list[str] = field(default_factory=list)
@@ -34,6 +35,7 @@ class AgentState:
             "evidence": self.evidence,
             "quality_check": self.quality_check,
             "findings": self.findings,
+            "messages": self.messages,
             "actions_taken": self.actions_taken,
             "recommendations": self.recommendations,
             "playbook": self.playbook,
