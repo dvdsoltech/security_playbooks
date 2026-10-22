@@ -4,8 +4,8 @@ from agents.graph.nodes import build_graph
 
 
 def main() -> None:
-    workflow = build_graph()
-    app = workflow.compile()
+    analysis = build_graph()
+    app = analysis.compile()
     print("LangGraph app compiled successfully.")
     print(app)
 
