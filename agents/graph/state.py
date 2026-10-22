@@ -17,6 +17,7 @@ class AgentState:
     findings: list[str] = field(default_factory=list)
     actions_taken: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
+    quality_check: str | None = None
     playbook: str | None = None
     rationale: str | None = None
     next_step: str | None = None
@@ -30,6 +31,7 @@ class AgentState:
             "raw_alert": self.raw_alert,
             "source": self.source,
             "evidence": self.evidence,
+            "quality_check": self.quality_check,
             "findings": self.findings,
             "actions_taken": self.actions_taken,
             "recommendations": self.recommendations,
