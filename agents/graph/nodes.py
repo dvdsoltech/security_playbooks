@@ -8,6 +8,8 @@ from langgraph.prebuilt import tools_condition
 
 from agents.graph.state import AgentState
 
+from tools.tool_registry import register_tools
+
 """ Returns a selected provider class"""
 from providers.provider_factory import create_model_provider
 
@@ -41,6 +43,12 @@ def assign_incident(state: AgentState) -> AgentState:
 def investigate_incident(state: AgentState) -> AgentState:
     """Collect findings from tools and evidence sources, disposition, and log"""
     provider = create_model_provider()
+    tool_map = register_tools()
+
+    tools = []
+    for tool in tool_map.values():
+        if hasattr(tool, "tool_schema"):
+            tools.append(tool.tool_schema())
 
     alert_payload = state.raw_alert
     system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
@@ -53,9 +61,12 @@ def investigate_incident(state: AgentState) -> AgentState:
         tool_choice="auto"
     )
 
-    parsed = json.loads(analysis)
+    # The provider may return a plain text response or a tool-call result.
+    # If it returns tool calls, execute them and feed the result back to the model.
+    parsed = json.loads(analysis) if isinstance(analysis, str) and analysis.strip().startswith("{") else {}
     quality_check = parsed.get("quality_check", "").strip()
     recommendations = parsed.get("recommendations", "").strip()
+    findings = parsed.get("findings", "").strip()
     
     state.status = "investigating"
     state.next_step = "Correlate evidence across detection systems and validate the root cause"
