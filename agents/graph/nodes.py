@@ -7,6 +7,7 @@ from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import tools_condition
+from langchain_core.messages import AIMessage
 
 from agents.graph.state import AgentState
 
