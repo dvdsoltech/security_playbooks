@@ -11,10 +11,8 @@ class AgentState:
     incident_id: str | None = None
     status: Literal["new", "assignment", "investigating", "responding", "concluded", "blocked"] = "new"
     severity: Literal["low", "medium", "high", "critical"] = "medium"
+    raw_alert: dict[str, Any] | None = None
     source: str | None = None
-    title: str | None = None
-    summary: str | None = None
-    entity: str | None = None
     evidence: list[dict[str, Any]] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
     actions_taken: list[str] = field(default_factory=list)
@@ -29,10 +27,8 @@ class AgentState:
             "incident_id": self.incident_id,
             "status": self.status,
             "severity": self.severity,
+            "raw_alert": self.raw_alert,
             "source": self.source,
-            "title": self.title,
-            "summary": self.summary,
-            "entity": self.entity,
             "evidence": self.evidence,
             "findings": self.findings,
             "actions_taken": self.actions_taken,
