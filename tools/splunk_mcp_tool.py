@@ -63,3 +63,30 @@ class SplunkMcpTool(SecurityTool):
             },
             message="Splunk MCP bridge configuration ready.",
         )
+@staticmethod
+def tool_schema() -> dict[str, Any]:
+    return {
+        "type": "function",
+        "function": {
+            "name": "splunk_mcp_query",
+            "description": "Query Splunk through the remote MCP endpoint.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The Splunk search or investigation query to run.",
+                    },
+                    "earliest": {
+                        "type": "string",
+                        "description": "The earliest time range, e.g. -1h or -24h.",
+                    },
+                    "latest": {
+                        "type": "string",
+                        "description": "The latest time range, e.g. now.",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    }
