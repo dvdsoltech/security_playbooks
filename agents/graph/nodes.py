@@ -13,15 +13,15 @@ from providers.provider_factory import create_model_provider
 
 """ We're going to centrally manage the assignment evaluation prompt, so grab that. """
 PROMPT_ROOT = Path(__file__).resolve().parents[1] / "prompts"
-ASSIGNMENT_PROMPT_PATH = PROMPT_ROOT / "assignment_prompt.md"
+
 
 """ We'll let the upstream sources determine initial severity.  """
 def assign_incident(state: AgentState) -> AgentState:
     """The invocation will include the alert details. Here we will have the LLM evaluate the as-is alert content and determine initial applicable playbook."""
 
-    alert_payload = state.to_dict()
+    alert_payload = state.raw_alert
     provider = create_model_provider()
-    system_prompt = Path(ASSIGNMENT_PROMPT_PATH).read_text(encoding="utf-8")
+    system_prompt = Path(PROMPT_ROOT / "assignment_prompt.md").read_text(encoding="utf-8")
     input = json.dumps(alert_payload, default=str, sort_keys=True)
 
     decision = await provider.invoke(
@@ -40,11 +40,26 @@ def assign_incident(state: AgentState) -> AgentState:
 
 def investigate_incident(state: AgentState) -> AgentState:
     """Collect findings from tools and evidence sources, disposition, and log"""
+    provider = create_model_provider()
+
+    alert_payload = state.raw_alert
+    system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
+    input = json.dumps(alert_payload, default=str, sort_keys=True)
+    
+    analysis = await provider.invoke(
+        system_prompt=system_prompt,
+        input=input
+    )
+
+    parsed = json.loads(analysis)
+    quality_check = parsed.get("quality_check", "").strip()
+    recommendations = parsed.get("recommendations", "").strip()
+    
     state.status = "investigating"
     state.next_step = "Correlate evidence across detection systems and validate the root cause"
     return state
 
-""" Conclusion from the perspective of the agent. """
+""" Conclusion from the perspective of the graph node. """
 def conclude_incident(state: AgentState) -> AgentState:
     """Generate and recommend containment or remediation actions. Communicate with the humans"""
     """Final state for a resolved or blocked event."""
