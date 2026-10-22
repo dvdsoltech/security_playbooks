@@ -26,7 +26,7 @@ async def assign_incident(state: AgentState) -> AgentState:
     alert_payload = state.raw_alert
     provider = create_model_provider()
     system_prompt = Path(PROMPT_ROOT / "assignment_prompt.md").read_text(encoding="utf-8")
-    user_message = json.dumps(alert_payload, default=str, sort_keys=True)
+    user_message = json.dumps(alert_payload or {}, default=str, sort_keys=True)
 
     decision = await provider.invoke(
         system_prompt=system_prompt,
@@ -47,10 +47,14 @@ async def investigate_incident(state: AgentState) -> AgentState:
     provider = create_model_provider()
     tool_map = register_tools()
 
-    tools = []
-    for tool in tool_map.values():
-        if hasattr(tool, "tool_schema"):
-            tools.append(tool.tool_schema())
+    tools = [
+        tool.tool_schema()
+        for tool in tool_map.values()
+        if hasattr(tool, "tool_schema")
+    ]
+    #for tool in tool_map.values():
+        #if hasattr(tool, "tool_schema"):
+            #tools.append(tool.tool_schema())
 
     alert_payload = state.raw_alert
     system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
