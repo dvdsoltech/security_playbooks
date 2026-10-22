@@ -1,17 +1,41 @@
 from __future__ import annotations
 
 from typing import Any
+from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import tools_condition
 
 from agents.graph.state import AgentState
 
+""" Returns a selected provider class"""
+from providers.provider_factory import create_model_provider
+
+""" We're going to centrally manage the assignment evaluation prompt, so grab that. """
+PROMPT_ROOT = Path(__file__).resolve().parents[1] / "prompts"
+ASSIGNMENT_PROMPT_PATH = PROMPT_ROOT / "assignment_prompt.md"
+
 """ We'll let the upstream sources determine initial severity.  """
 def assign_incident(state: AgentState) -> AgentState:
     """The invocation will include the alert details. Here we will have the LLM evaluate the as-is alert content and determine initial applicable playbook."""
+
+    alert_payload = state.to_dict()
+    provider = create_model_provider()
+    system_prompt = Path(ASSIGNMENT_PROMPT_PATH).read_text(encoding="utf-8")
+    input = json.dumps(alert_payload, default=str, sort_keys=True)
+
+    decision = await provider.invoke(
+        system_prompt=system_prompt,
+        input=input
+    )
+    parsed = json.loads(decision)
+    playbook = parsed.get("playbook", "").strip().lower()
+    rationale = parsed.get("rationale", "").strip()
+    
+    state.playbook = playbook
+    state.rationale = rationale
     state.status = "assignment"
-    state.next_step = "Apply the appropriate security playbook to the reported incident"
+    state.next_step = "Proceed with the appropriate security playbook to the reported security event"
     return state
 
 def investigate_incident(state: AgentState) -> AgentState:
