@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from typing import Any
 from pathlib import Path
 
@@ -18,7 +20,7 @@ PROMPT_ROOT = Path(__file__).resolve().parents[1] / "prompts"
 
 
 """ We'll let the upstream sources determine initial severity.  """
-def assign_incident(state: AgentState) -> AgentState:
+async def assign_incident(state: AgentState) -> AgentState:
     """The invocation will include the alert details. Here we will have the LLM evaluate the as-is alert content and determine initial applicable playbook."""
 
     alert_payload = state.raw_alert
@@ -40,7 +42,7 @@ def assign_incident(state: AgentState) -> AgentState:
     state.next_step = "Proceed with the appropriate security playbook to the reported security event"
     return state
 
-def investigate_incident(state: AgentState) -> AgentState:
+async def investigate_incident(state: AgentState) -> AgentState:
     """Collect findings from tools and evidence sources, disposition, and log"""
     provider = create_model_provider()
     tool_map = register_tools()
