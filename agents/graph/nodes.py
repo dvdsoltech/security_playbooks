@@ -42,6 +42,7 @@ async def assign_incident(state: AgentState) -> AgentState:
     state.next_step = "Proceed with the appropriate security playbook to the reported security event"
     return state
 
+
 async def investigate_incident(state: AgentState) -> AgentState:
     """Collect findings from tools and evidence sources, disposition, and log"""
     provider = create_model_provider()
@@ -52,9 +53,6 @@ async def investigate_incident(state: AgentState) -> AgentState:
         for tool in tool_map.values()
         if hasattr(tool, "tool_schema")
     ]
-    #for tool in tool_map.values():
-        #if hasattr(tool, "tool_schema"):
-            #tools.append(tool.tool_schema())
 
     alert_payload = state.raw_alert
     system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
@@ -66,18 +64,62 @@ async def investigate_incident(state: AgentState) -> AgentState:
         tools=tools,
         tool_choice="auto"
     )
-
+    
+    # Store the tool call payload the graph will route on
+    # This depends on how your provider returns tool_calls.
+    if isinstance(analysis, dict):
+        state.tool_calls = analysis.get("tool_calls", [])
+        
     # The provider may return a plain text response or a tool-call result.
     # If it returns tool calls, execute them and feed the result back to the model.
     parsed = json.loads(analysis) if isinstance(analysis, str) and analysis.strip().startswith("{") else {}
-    quality_check = parsed.get("quality_check", "").strip()
-    recommendations = parsed.get("recommendations", "").strip()
-    findings = parsed.get("findings", "").strip()
-    
+    state.quality_check = parsed.get("quality_check", "").strip()
+    state.recommendations = parsed.get("recommendations", "").strip()
+    state.findings = parsed.get("findings", "").strip()
     state.status = "investigating"
     state.next_step = "Correlate evidence across detection systems and validate the root cause"
+    
     return state
 
+
+async def tool_node(state: AgentState) -> AgentState:
+    """Execute any tool calls emitted by the model during investigation."""
+    tool_map = register_tools()
+
+    # This assumes the model output is structured as tool_calls.
+    # If you are using LangGraph message-based state, this would typically read from
+    # state.messages[-1].tool_calls instead.
+    tool_calls = getattr(state, "tool_calls", None) or []
+
+    if not tool_calls:
+        return state
+
+    for call in tool_calls:
+        tool_name = call.get("name")
+        arguments = call.get("args", {}) or {}
+
+        if tool_name not in tool_map:
+            state.errors.append(f"Unknown tool requested: {tool_name}")
+            continue
+
+        tool = tool_map[tool_name]
+        result = await tool.execute(**arguments)
+
+        if result.success:
+            state.evidence.append(
+                {
+                    "tool": tool_name,
+                    "data": result.data,
+                    "message": result.message,
+                }
+            )
+        else:
+            state.errors.append(f"{tool_name}: {result.message}")
+
+    state.status = "investigating"
+    return state
+
+    
 """ Conclusion from the perspective of the graph node. """
 async def conclude_incident(state: AgentState) -> AgentState:
     """Generate and recommend containment or remediation actions. Communicate with the humans"""
@@ -92,6 +134,7 @@ def build_graph() -> StateGraph:
 
     analysis.add_node("assignment", assign_incident)
     analysis.add_node("investigate", investigate_incident)
+    analysis.add_node("tools", tool_node)
     analysis.add_node("conclude", conclude_incident)
 
     analysis.set_entry_point("assignment")
