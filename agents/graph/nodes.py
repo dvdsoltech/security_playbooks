@@ -75,7 +75,7 @@ async def investigate_incident(state: AgentState) -> AgentState:
     return state
 
 """ Conclusion from the perspective of the graph node. """
-def conclude_incident(state: AgentState) -> AgentState:
+async def conclude_incident(state: AgentState) -> AgentState:
     """Generate and recommend containment or remediation actions. Communicate with the humans"""
     """Final state for a resolved or blocked event."""
     state.status = "concluded" if not state.errors else "blocked"
