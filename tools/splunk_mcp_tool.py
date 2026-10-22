@@ -1,37 +1,65 @@
+from __future__ import annotations
+
 import os
+from typing import Any
 
-from langchain_core.tools import BaseTool
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from tools.base_tool import SecurityTool, ToolResult
 
 
-def create_splunk_mcp_client() -> MultiServerMCPClient:
-    url = os.environ.get("SPLUNK_MCP_URL")
-    token = os.environ.get("SPLUNK_MCP_TOKEN")
+class SplunkMcpTool(SecurityTool):
+    """Wrapper for the Splunk remote MCP server.
 
-    if not url or not url.strip():
-        raise RuntimeError("SPLUNK_MCP_URL must be set")
-    if not token or not token.strip():
-        raise RuntimeError("SPLUNK_MCP_TOKEN must be set")
+    This class creates the exact config/command pattern that Splunk expects
+    for mcp-remote, while still fitting the repo's tool interface.
+    """
 
-    return MultiServerMCPClient(
-        {
-            "splunk": {
-                "transport": "streamable_http",
-                "url": url,
-                "headers": {"Authorization": f"Bearer {token}"},
+    def __init__(self):
+        self.name = "splunk_mcp"
+        self.endpoint = os.getenv("SPLUNK_MCP_ENDPOINT")
+        self.token = os.getenv("SPLUNK_MCP_TOKEN")
+        self.server_name = os.getenv("SPLUNK_MCP_SERVER_NAME", "splunk-mcp-server")
+        self.base_url = self.endpoint
+
+        if not self.endpoint:
+            raise ValueError("SPLUNK_MCP_ENDPOINT is required for Splunk MCP access.")
+
+    def as_mcp_config(self) -> dict[str, Any]:
+        """Return the same JSON shape Splunk provided for an MCP client."""
+        args = ["-y", "mcp-remote", self.endpoint]
+
+        if self.token:
+            args.extend(["--header", f"Authorization: Bearer {self.token}"])
+
+        return {
+            "mcpServers": {
+                self.server_name: {
+                    "command": "npx",
+                    "args": args,
+                }
             }
         }
-    )
 
+    def build_command(self) -> list[str]:
+        """Build the CLI command used by mcp-remote."""
+        command = ["npx", "-y", "mcp-remote", self.endpoint]
+        if self.token:
+            command.extend(["--header", f"Authorization: Bearer {self.token}"])
+        return command
 
-async def get_splunk_tools() -> list[BaseTool]:
-    client = create_splunk_mcp_client()
-    return await client.get_tools(server_name="splunk")
-
-
-def main():
-    print("Hello from soc-lite!")
-
-
-if __name__ == "__main__":
-    main()
+    async def execute(self, *args, **kwargs) -> ToolResult:
+        """Return the resolved MCP config and command for the client."""
+        config = self.as_mcp_config()
+        return ToolResult(
+            success=True,
+            data={
+                "server_name": self.server_name,
+                "endpoint": self.endpoint,
+                "command": self.build_command(),
+                "mcp_config": config,
+                "note": (
+                    "This tool prepares and validates the Splunk MCP bridge. "
+                    "A separate MCP client library is still needed to actually execute tools."
+                ),
+            },
+            message="Splunk MCP bridge configuration ready.",
+        )
