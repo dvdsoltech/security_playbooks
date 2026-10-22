@@ -14,11 +14,10 @@ class SplunkMcpTool(SecurityTool):
     """
 
     def __init__(self):
-        self.name = "splunk_mcp"
-        self.endpoint = os.getenv("SPLUNK_MCP_ENDPOINT")
+        super().__init__(name="splunk_mcp", base_url=os.getenv("SPLUNK_MCP_ENDPOINT"))
+        self.endpoint = self.base_url
         self.token = os.getenv("SPLUNK_MCP_TOKEN")
         self.server_name = os.getenv("SPLUNK_MCP_SERVER_NAME", "splunk-mcp-server")
-        self.base_url = self.endpoint
 
         if not self.endpoint:
             raise ValueError("SPLUNK_MCP_ENDPOINT is required for Splunk MCP access.")
