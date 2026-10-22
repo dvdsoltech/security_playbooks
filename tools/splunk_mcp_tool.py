@@ -63,6 +63,7 @@ class SplunkMcpTool(SecurityTool):
             },
             message="Splunk MCP bridge configuration ready.",
         )
+        
 @staticmethod
 def tool_schema() -> dict[str, Any]:
     return {
