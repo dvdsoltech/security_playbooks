@@ -9,15 +9,14 @@ from tools.base_tool import SecurityTool, ToolResult
 
 
 class SplunkApiTool(SecurityTool):
-    """Wrapper for Splunk REST API operations, including kvstore record updates."""
+    """Strictly POST-only wrapper for Splunk kvstore writes using a bearer token."""
 
     def __init__(self):
         super().__init__(
             name="splunk_api",
             base_url=os.getenv("SPLUNK_API_URL"),
         )
-        self.username = os.getenv("SPLUNK_USERNAME")
-        self.password = os.getenv("SPLUNK_PASSWORD")
+        self.token = os.getenv("SPLUNK_API_TOKEN")
         self.session = None
 
     @staticmethod
@@ -25,47 +24,74 @@ class SplunkApiTool(SecurityTool):
         return {
             "type": "function",
             "function": {
-                "name": "splunk_kvstore_upsert",
-                "description": "Create or update a record in a Splunk kvstore collection.",
+                "name": "splunk_kvstore_post",
+                "description": "Write a JSON payload to a Splunk kvstore collection using an HTTP POST. This tool is restricted to POST operations only.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "collection": {
                             "type": "string",
-                            "description": "The collection name in Splunk kvstore.",
+                            "description": "The Splunk kvstore collection name to write to.",
                         },
-                        "record": {
+                        "payload": {
                             "type": "object",
-                            "description": "The kvstore record payload to write.",
-                        },
-                        "record_id": {
-                            "type": "string",
-                            "description": "Optional record ID to update. If omitted, create a new record.",
+                            "description": "The JSON object payload to be inserted or updated in the collection.",
+                            "additionalProperties": True,
                         },
                     },
-                    "required": ["collection", "record"],
+                    "required": ["collection", "payload"],
                 },
             },
         }
 
     async def execute(
         self,
-        action: str,
-        collection: str | None = None,
-        record: dict[str, Any] | None = None,
-        record_id: str | None = None,
+        collection: str,
+        payload: dict[str, Any],
         **kwargs: Any,
     ) -> ToolResult:
-        # Replace this with your actual HTTP implementation.
-        # This is the hook the model would call when it decides to write an audit record.
-        return ToolResult(
-            success=True,
-            data={
-                "action": action,
-                "collection": collection,
-                "record_id": record_id,
-                "record": record,
-                "note": "Placeholder Splunk API execution. Implement POST/PUT/GET calls here.",
-            },
-            message="Splunk API tool execution placeholder.",
-        )
+        """POST a JSON payload to a Splunk kvstore collection."""
+        if not collection:
+            return ToolResult(success=False, data={}, message="collection is required.")
+
+        if not isinstance(payload, dict):
+            return ToolResult(success=False, data={}, message="payload must be a JSON object.")
+
+        if not self.token:
+            return ToolResult(
+                success=False,
+                data={},
+                message="SPLUNK_API_TOKEN is required.",
+            )
+
+        endpoint = f"{self.base_url.rstrip('/')}/servicesNS/search/json/{collection}"
+
+        try:
+            if self.session is None:
+                self.session = httpx.AsyncClient(
+                    headers={"Authorization": f"Bearer {self.token}"},
+                    timeout=30.0,
+                )
+
+            response = await self.session.post(
+                endpoint,
+                json=payload,
+            )
+            response.raise_for_status()
+
+            return ToolResult(
+                success=True,
+                data={
+                    "collection": collection,
+                    "payload": payload,
+                    "status_code": response.status_code,
+                    "response": response.json() if response.content else {},
+                },
+                message="POST successful.",
+            )
+        except Exception as exc:  # pragma: no cover
+            return ToolResult(
+                success=False,
+                data={"collection": collection, "payload": payload},
+                message=f"Splunk kvstore POST failed: {exc}",
+            )
