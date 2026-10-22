@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from langchain_core.messages import AIMessage, BaseMessage
+
 from providers.base_provider import BaseModelProvider
 
 
@@ -32,6 +34,23 @@ class FoundryProvider(BaseModelProvider):
             azure_endpoint=self.endpoint,
         )
 
+    def _to_ai_message(self, message: Any) -> AIMessage:
+        tool_calls = []
+        if getattr(message, "tool_calls", None):
+            for call in message.tool_calls:
+                tool_calls.append(
+                    {
+                        "name": call.function.name,
+                        "args": call.function.arguments if isinstance(call.function.arguments, dict) else json.loads(call.function.arguments),
+                        "id": call.id,
+                    }
+                )
+
+        return AIMessage(
+            content=message.content or "",
+            tool_calls=tool_calls,
+        )
+    
     async def invoke(self, system_prompt: str, user_message: str, **kwargs: Any) -> str:
         if self.client is None:
             self.initialize()
@@ -44,15 +63,15 @@ class FoundryProvider(BaseModelProvider):
             ],
             **kwargs,
         )
-        return response.choices[0].message.content
+        return self._to_ai_message(response.choices[0].message)
 
-    async def invoke_messages(self, messages: list[dict[str, str]], **kwargs: Any) -> str:
+    async def invoke_messages(self, messages: list[BaseMessage], **kwargs: Any) -> AIMessage:
         if self.client is None:
             self.initialize()
 
         response = self.client.chat.completions.create(
             model=self.deployment,
-            messages=messages,
+            messages=[{"role": m.type, "content": m.content} for m in messages],
             **kwargs,
         )
-        return response.choices[0].message.content
+        return self._to_ai_message(response.choices[0].message)
