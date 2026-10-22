@@ -9,7 +9,7 @@ class AgentState:
     """State container used by the LangGraph workflow."""
 
     incident_id: str | None = None
-    status: Literal["new", "triage", "investigating", "responding", "resolved", "blocked"] = "new"
+    status: Literal["new", "assignment", "investigating", "responding", "concluded", "blocked"] = "new"
     severity: Literal["low", "medium", "high", "critical"] = "medium"
     source: str | None = None
     title: str | None = None
