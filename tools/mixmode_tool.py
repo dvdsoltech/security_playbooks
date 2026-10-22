@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+import httpx
+
 from tools.base_tool import SecurityTool, ToolResult
 
 
@@ -15,6 +17,7 @@ class MixmodeTool(SecurityTool):
             base_url=os.getenv("MIXMODE_API_URL"),
         )
         self.api_key = os.getenv("MIXMODE_API_KEY")
+        self.session = None
 
     @staticmethod
     def tool_schema() -> dict[str, Any]:
@@ -28,11 +31,11 @@ class MixmodeTool(SecurityTool):
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The Mixmode PQL query string. Time ranges are commonly included directly in the query.",
+                            "description": "The Mixmode PQL query string. Time ranges are often included directly in the query.",
                         },
                         "timezone": {
                             "type": "string",
-                            "description": "Optional timezone for parsing date/time statements in the Mixmode query language.",
+                            "description": "Optional timezone for parsing date/time statements.",
                         },
                         "context": {
                             "type": "array",
@@ -45,17 +48,54 @@ class MixmodeTool(SecurityTool):
             },
         }
 
-    async def execute(self, *args, **kwargs) -> ToolResult:
-        return ToolResult(
-            success=True,
-            data={
-                "mode": "api",
-                "api_url": self.base_url,
-                "api_key_present": bool(self.api_key),
-                "note": (
-                    "Use the Mixmode API to run a PQL query. "
-                    "The API key is sent as the x-mixmode-api-token header."
-                ),
-            },
-            message="Mixmode tool initialized.",
-        )
+    async def execute(
+        self,
+        query: str,
+        timezone: str | None = None,
+        context: list[int] | None = None,
+        **kwargs: Any,
+    ) -> ToolResult:
+        if not self.api_key:
+            return ToolResult(
+                success=False,
+                data={},
+                message="MIXMODE_API_KEY is not configured.",
+            )
+
+        if not self.base_url:
+            return ToolResult(
+                success=False,
+                data={},
+                message="MIXMODE_API_URL is not configured.",
+            )
+
+        params = {"query": query}
+        if timezone:
+            params["timezone"] = timezone
+        if context is not None:
+            params["context"] = context
+
+        try:
+            if self.session is None:
+                self.session = httpx.AsyncClient(
+                    headers={"x-mixmode-api-token": self.api_key},
+                    timeout=60.0,
+                )
+
+            response = await self.session.post(
+                self.base_url.rstrip("/") + "/logs/search",
+                json=params,
+            )
+            response.raise_for_status()
+
+            return ToolResult(
+                success=True,
+                data=response.json(),
+                message="Mixmode query executed successfully.",
+            )
+        except Exception as exc:
+            return ToolResult(
+                success=False,
+                data={"query": query, "timezone": timezone, "context": context},
+                message=f"Mixmode query failed: {exc}",
+            )
