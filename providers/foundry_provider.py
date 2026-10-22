@@ -51,7 +51,7 @@ class FoundryProvider(BaseModelProvider):
             tool_calls=tool_calls,
         )
     
-    async def invoke(self, system_prompt: str, user_message: str, **kwargs: Any) -> str:
+    async def invoke(self, system_prompt: str, user_message: str, **kwargs: Any) -> AIMessage:
         if self.client is None:
             self.initialize()
 
