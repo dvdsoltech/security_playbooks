@@ -21,6 +21,7 @@ class AgentState:
     playbook: str | None = None
     rationale: str | None = None
     next_step: str | None = None
+    tool_calls: str | None = None
     errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -38,5 +39,6 @@ class AgentState:
             "playbook": self.playbook,
             "rationale": self.rationale,
             "next_step": self.next_step,
+            "tool_calls": self.tool_calls,
             "errors": self.errors,
         }
