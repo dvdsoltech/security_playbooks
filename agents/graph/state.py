@@ -20,6 +20,7 @@ class AgentState:
     actions_taken: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
     playbook: str | None = None
+    rationale: str | None = None
     next_step: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -37,6 +38,7 @@ class AgentState:
             "actions_taken": self.actions_taken,
             "recommendations": self.recommendations,
             "playbook": self.playbook,
+            "rationale": self.rationale,
             "next_step": self.next_step,
             "errors": self.errors,
         }
