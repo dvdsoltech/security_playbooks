@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from tools.base_tool import SecurityTool, ToolResult
 
@@ -14,7 +15,35 @@ class MixmodeTool(SecurityTool):
             base_url=os.getenv("MIXMODE_API_URL"),
         )
         self.api_key = os.getenv("MIXMODE_API_KEY")
-        self.tenant_id = os.getenv("MIXMODE_TENANT_ID")
+
+    @staticmethod
+    def tool_schema() -> dict[str, Any]:
+        return {
+            "type": "function",
+            "function": {
+                "name": "mixmode_log_query",
+                "description": "Execute a Mixmode PQL query and return log results.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The Mixmode PQL query string. Time ranges are commonly included directly in the query.",
+                        },
+                        "timezone": {
+                            "type": "string",
+                            "description": "Optional timezone for parsing date/time statements in the Mixmode query language.",
+                        },
+                        "context": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                            "description": "Optional list of sensor IDs to constrain the query.",
+                        },
+                    },
+                    "required": ["query"],
+                },
+            },
+        }
 
     async def execute(self, *args, **kwargs) -> ToolResult:
         return ToolResult(
@@ -22,32 +51,11 @@ class MixmodeTool(SecurityTool):
             data={
                 "mode": "api",
                 "api_url": self.base_url,
-                "tenant_id": self.tenant_id,
-                "note": "Use Mixmode API for log querying and event analysis.",
+                "api_key_present": bool(self.api_key),
+                "note": (
+                    "Use the Mixmode API to run a PQL query. "
+                    "The API key is sent as the x-mixmode-api-token header."
+                ),
             },
             message="Mixmode tool initialized.",
         )
-
-@staticmethod
-def tool_schema() -> dict[str, Any]:
-    return {
-        "type": "function",
-        "function": {
-            "name": "mixmode_log_query",
-            "description": "Query Mixmode for event or log data to support incident investigation.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The Mixmode search query or event filter.",
-                    },
-                    "time_range": {
-                        "type": "string",
-                        "description": "Relative time range, e.g. -24h or -7d.",
-                    },
-                },
-                "required": ["query"],
-            },
-        },
-    }
