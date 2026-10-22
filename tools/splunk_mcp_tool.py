@@ -69,25 +69,26 @@ class SplunkMcpTool(SecurityTool):
         return {
             "type": "function",
             "function": {
-                "name": "splunk_mcp_query",
-                "description": "Query Splunk through the remote MCP endpoint.",
+                "name": "splunk_mcp_execute",
+                "description": "Execute a Splunk MCP operation such as a search, lookup, investigation, or data retrieval.",
                 "parameters": {
                     "type": "object",
                     "properties": {
+                        "operation": {
+                            "type": "string",
+                            "description": "The Splunk MCP operation to execute, e.g. search, lookup, query, kvstore_read.",
+                        },
                         "query": {
                             "type": "string",
-                            "description": "The Splunk search or investigation query to run.",
+                            "description": "The primary Splunk command or query payload.",
                         },
-                        "earliest": {
-                            "type": "string",
-                            "description": "The earliest time range, e.g. -1h or -24h.",
-                        },
-                        "latest": {
-                            "type": "string",
-                            "description": "The latest time range, e.g. now.",
+                        "arguments": {
+                            "type": "object",
+                            "description": "Optional free-form arguments for the specific operation, such as earliest, latest, fields, collection, record_id, or filters.",
+                            "additionalProperties": True,
                         },
                     },
-                    "required": ["query"],
+                    "required": ["operation", "query"],
                 },
             },
         }
