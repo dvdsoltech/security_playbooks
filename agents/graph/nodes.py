@@ -146,7 +146,7 @@ def build_graph() -> StateGraph:
     analysis.set_entry_point("assignment")
 
     analysis.add_edge("assignment", "investigate")
-    analysis.add_conditional_edge("investigate", tools_condition)
+    analysis.add_conditional_edges("investigate", tools_condition)
     analysis.add_edge("tools","investigate")
     analysis.add_edge("investigate", "conclude")
     
