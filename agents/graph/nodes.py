@@ -59,7 +59,7 @@ async def investigate_incident(state: AgentState) -> AgentState:
     ]
 
     alert_payload = state.raw_alert
-    system_prompt = Path(PROMPT_ROOT / state.playbook).read_text(encoding="utf-8")
+    system_prompt = Path(PROMPT_ROOT / "investigation" / state.playbook).read_text(encoding="utf-8")
     user_message = json.dumps(alert_payload, default=str, sort_keys=True)
     
     response = await provider.invoke(
