@@ -9,13 +9,13 @@ Record the following information from the alert. If a data point is missing, not
 - Source IP
   - Query: IP Resolution: `` `sp_dns_index` `sp_dns_query({src_ip})` ``
 - Source Hostname
-  - Query: Hostname Resolution: `` \`sp_dns_index\` \`sp_dns_query({src_dns})\` ``
+  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({src_dns})` ``
 - Source Port and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Destination IP
-  - Destination IP Resolution Query `` \`sp_dns_index\` \`sp_dns_query({dest_ip})\` ``
+  - Destination IP Resolution Query `` `sp_dns_index` `sp_dns_query({dest_ip})` ``
 - Destination Hostname
-  - Query: Hostname Resolution: `` \`sp_dns_index\` \`sp_dns_query({dest_dns})\` ``
+  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({dest_dns})` ``
 - Destination Ports and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Identity
