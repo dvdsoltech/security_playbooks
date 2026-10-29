@@ -7,15 +7,15 @@
 ### Ensure relevant information is recorded and fill in gaps
 Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
 - Source IP
-  - Query: IP Resolution: `` `sp_dns_index` `sp_dns_query({src_ip})` ``
+  - Query: IP Resolution: `` `sp_dns_index` `sp_dns_query({{SRC_IP}})` ``
 - Source Hostname
-  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({src_dns})` ``
+  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({{SRC_DNS}})` ``
 - Source Port and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Destination IP
-  - Destination IP Resolution Query `` `sp_dns_index` `sp_dns_query({dest_ip})` ``
+  - Destination IP Resolution Query `` `sp_dns_index` `sp_dns_query({{DEST_IP}})` ``
 - Destination Hostname
-  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({dest_dns})` ``
+  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({{DEST_DNS}})` ``
 - Destination Ports and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Identity
@@ -29,7 +29,7 @@ Record the following information from the alert. If a data point is missing, not
 ### Consider if the entities are expected
 - Are the involved entities listed in the asset inventories?
   - Check a Splunk Asset Inventory
-    - Asset Inventory: `\`sp_inventory_assets({entity_ip},{entity_dns})\``
+    - Asset Inventory: `` \`sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})\` ``
       - Qualifier: regex wildcard ".*" for whichever entity value is missing
 - If so, find the operating system and infer the likeliest system function of the entity as gathered by the inventories
 - If not included in the alert, infer the priority of the entity in context of its assumed function and operating system within the environment
@@ -39,13 +39,12 @@ Record the following information from the alert. If a data point is missing, not
 ### Associate identities with the entities
 - Infer an account from the hostname if the system has a workstation operating system. VRS tends to assign hostnames that have a matching pattern with the assigned user's account name.
 - Review Windows Event Logs for the most recent identities accessing the entity within a +/- 1 hour window of the alert.
-  - Windows Event Logs: `index=wineventlog EventCode=4624 <entity_hostname> Account_Name!="*$"  Source_Network_Address!="10.21.4.25" earliest=<alert_earliest_time_epoch_minus_1_hour> latest=<alert_latest_time_epoch_plus_1_hour>  | stats values(Account_Name) as accounts  by ComputerName Source_Network_Address`
+  - Windows Event Logs: `` \`sp_windows_4624({{ENTITY_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})\` ``
 - Do a best-effort deduplication from the above two steps.
 - Validate the identities by checking the following identity stores
-  - LDAP: `| inputlookup vrs_identities_ldap | where match(identity,"<identity>") OR match(identity,"<identity2>") | table identity user_domain userAccountControl displayName category`
-  - Okta `index=okta <identity> OR <identity2> earliest=-1h | table _time * ` (**Query not available at this time**)
-  - Entra `| inputlookup vrs_identities_entra | where match(identity,"<identity>") OR match(identity,"<identity2>") | table identity user_domain  displayName email first laset title *`
-  - Windows Local Accounts `index=windows sourcetype=WinLocalUsers` (**Query not available at this time**)
+  - Identity Inventory: `` \`sp_inventory_identities({{IDENTITY}})\` ``
+  - Windows Local Accounts `` `\sp_windows_local_accounts{{IDENTITY}}\` `` 
+  - Linux Local Accounts (**Query not available at this time**)
   - Distinguish the account that initiated a process from a user who was merely logged on. If attribution is uncertain, say so.
 
 ### Consider if network traffic is normal
