@@ -7,7 +7,7 @@
 ### Ensure relevant information is recorded and fill in gaps
 Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
 - Source IP
-  - Query: IP Resolution: `\\`sp_dns_index\` \`sp_dns_query({src_ip})\``
+  - Query: IP Resolution: ` \`sp_dns_index\` \`sp_dns_query({src_ip})\``
 - Source Hostname
   - Query: Hostname Resolution: `\`sp_dns_index\` \`sp_dns_query({src_dns})\``
 - Source Port and Protocol
