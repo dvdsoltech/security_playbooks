@@ -28,7 +28,9 @@ Record the following information from the alert: source ip, source hostname, sou
 - Destination Ports and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Identity:
-- Time Range:
+- Alert Time:
+- Earliest Time:
+- Latest Time:
 - Bytes in/out:
 - Alert Source:
 - Transfer Content: Any reported file names, paths, object names, content types, or data-classification labels
