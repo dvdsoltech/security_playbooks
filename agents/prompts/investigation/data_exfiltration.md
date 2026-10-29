@@ -1,8 +1,14 @@
-# Restraints
+# Data Exfiltration Alert - Initial Incident Determination
+
+## Guidance
+Alert data can often be lean and sometimes missing key values and enrichments that would inform a more conclusive up-front verdict. Where gaps in value and enrichments are identified, it is strongly recommended that these data points are applied at the data and/or alert layer. The intention of this playbook is not for the agents to do the work of tagging and enrichment, but rather to validate the initial evidence provided by the alert and fill in any gaps. The direction for many of the tool calls here will be to avoid the tool calls if the data is already present.
+
+Where the agent's supplemental querying is uniquely beneficial is in scoping and contextualizing the alert details, details which inform and enhance the judgement of the agent.
+
+## Restraints
 - All queries currently use the Splunk MCP tool
 - Do not run tools or queries that has the following note at the end: "Query not available at this time" OR "Tool not available at this time"
 
-# Data Exfiltration Alert - Initial Incident Determination
 ## Check Alert Details
 ### Ensure relevant information is recorded and fill in gaps
 Record the following information from the alert: source ip, source hostname, source port/protocol, destination ip, destination hostname, destination port/protocol, identity, time range, bytes in, bytes out, alert source, transfer content, and transfer status. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
@@ -26,9 +32,6 @@ Record the following information from the alert: source ip, source hostname, sou
 - Transfer Status: Whether the alert describes a completed transfer, an attempted transfer, or suspected unconfirmed transfer
 
 ## Corroberate Suspicious Activity
-Alert data can often be lean and sometimes missing key values and enrichments that would inform a more conclusive up-front verdict. Where gaps in value and enrichments are identified, it is strongly recommended that these data points are applied at the data and/or alert layer. The intention of this playbook is not for the agents to do the work of tagging and enrichment, but rather to validate the initial evidence provided by the alert and fill in any gaps. The direction for many of the tool calls here will be to avoid the tool calls if the data is already present.
-
-Where the agent's supplemental querying is uniquely beneficial is in scoping and contextualizing the alert details, details which inform and enhance the judgement of the agent.
 
 ### Consider if the entities are expected
 - Are the involved entities listed in the asset inventories?
