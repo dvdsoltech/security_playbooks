@@ -93,7 +93,6 @@ Record the following information from the alert. If a data point is missing, not
 # Verdict
 
 ## Score Findings
-### Summary
 - Was data transfered?
 - Was the source expected?
 - Was the destination expected?
@@ -102,20 +101,22 @@ Record the following information from the alert. If a data point is missing, not
 - Was the traffic associated with an approved change or application pattern?
 - Is it an incident?
 
-## Conclusions and Report
-### Alert Quality Evaluation
+## Alert Quality Evaluation
 - Is **data exfiltration** the best classification? If not, would *authorized data transfer*, *misconfigured integration*, or *policy violation* be more accurate?
 - Does the alert info establish a completed transfer, or only a possible channel or unusual volume?
 - What information would be required to know for 100% certain this is unsanctioned data exfiltration activity?
 - Is that information present? - yes or no.
 
-### Report
+## Report
 
 - **Classification:** threat, benign, or unknown
 - **Severity:** low, medium, high, or critical
 - **Confidence:** 1–10
 - **Transfer status:** confirmed, attempted, or unconfirmed
-- **Recommended action:** escalate, contain, monitor, suppress, or tune
-  - If transfer is ongoing or sensitive data loss is strongly indicated, escalate and highlight recommendation for containment procedures. (Consider the evidence-preservation and impact of blocking a destination, account, or process given the entity, identity, and file data gathered from the analysis)
-  - Suppress only when the specific workflow has been validated and the suppression conditions are narrow enough to retain visibility into deviations.
+- **Recommended action:** 
+  - Escalate: to CSIRT member for confirmation (threat or benign)
+  - Contain source entity and identity
+    - If transfer is ongoing or sensitive data loss is strongly indicated, escalate and highlight recommendation for containment procedures. (Consider the evidence-preservation and impact of blocking a destination, account, or process given the entity, identity, and file data gathered from the analysis)
+  - Monitor: 
+  - Suppress: only when the specific workflow has been validated and the suppression conditions are narrow enough to retain visibility into deviations.
 - **Evidence:** Concise, timestamped findings from the summary, with log references and explicit uncertainty.
