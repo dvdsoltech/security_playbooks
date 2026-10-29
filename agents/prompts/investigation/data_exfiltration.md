@@ -45,7 +45,7 @@ Record the following information from the alert: source ip, source hostname, sou
 - If entity is not included in any official inventory, note the absence.
 
 ### Associate identities with the entities
-- Infer an account from the hostname if the system has a workstation operating system. VRS tends to assign hostnames that have a matching pattern with the assigned user's account name.
+- Infer an account from the hostname if the system has a workstation operating system. Some organizations tend to assign hostnames that match user account name patterns.
 - Review Windows Event Logs for the most recent identities accessing the entity within a +/- 1 hour window of the alert.
   - Windows Event Logs: `` `sp_windows_4624({{ENTITY_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 - Do a best-effort deduplication from the above two steps.
@@ -70,8 +70,8 @@ Record the following information from the alert: source ip, source hostname, sou
   -  (**Tool not available at this time**)
 
 ### Attribute activity to processes and data
-- Identify the process attributable to the connections `` \`sp_windows_process_connections({{SRC_DNS}},{{DEST_IP}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}}) \` ``
-- Further validate process execution within Windows Event Logs if process identified in the previous step: `` \`sp_windows_process_4688_4689({{PROCESS_NAME}},{{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})\` ``
+- Identify the process attributable to the connections `` `sp_windows_process_connections({{SRC_DNS}},{{DEST_IP}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}}) ` ``
+- Further validate process execution within Windows Event Logs if process identified in the previous step: `` `sp_windows_process_4688_4689({{PROCESS_NAME}},{{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 - See if you can reconcile the two sources above to support process attribution and report as a single correlated summary.
 - Look for relevant preparation or access activity from an identified host logs: file reads, archive creation, compression, staging, or use of transfer tools: `` `sp_windows_wineventlogs_all({{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 
