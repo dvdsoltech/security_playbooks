@@ -36,9 +36,9 @@ Record the following information from the alert: source ip, source hostname, sou
 ### Consider if the entities are expected
 - Are the involved entities listed in the asset inventories?
   - If not, check a Splunk Asset Inventory
-    - Asset Inventory: `` \`sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})\` ``
+    - Asset Inventory: `` `sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})` ``
       - Qualifier: regex wildcard ".*" for whichever entity value is missing
-- Is the source entity from a remote device?: `` \`sp_remote_managed_entity({{SRC_IP}})\` ``
+- Is the source entity from a remote device?: `` `sp_remote_managed_entity({{SRC_IP}})` ``
 - If so, find the operating system and infer the likeliest system function of the entity as gathered by the inventories
 - If not included in the alert, infer the priority of the entity in context of its assumed function and operating system within the environment
 - Get associated owner, contact, administator if included
@@ -47,19 +47,19 @@ Record the following information from the alert: source ip, source hostname, sou
 ### Associate identities with the entities
 - Infer an account from the hostname if the system has a workstation operating system. VRS tends to assign hostnames that have a matching pattern with the assigned user's account name.
 - Review Windows Event Logs for the most recent identities accessing the entity within a +/- 1 hour window of the alert.
-  - Windows Event Logs: `` \`sp_windows_4624({{ENTITY_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})\` ``
+  - Windows Event Logs: `` `sp_windows_4624({{ENTITY_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 - Do a best-effort deduplication from the above two steps.
 - Validate the identities by checking the following identity stores
-  - Identity Inventory: `` \`sp_inventory_identities({{IDENTITY}})\` ``
-  - Windows Local Accounts `` `\sp_windows_local_accounts{{IDENTITY}}\` `` 
+  - Identity Inventory: `` `sp_inventory_identities({{IDENTITY}})` ``
+  - Windows Local Accounts `` `sp_windows_local_accounts{{IDENTITY}}` `` 
   - Linux Local Accounts (**Query not available at this time**)
   - Distinguish the account that initiated a process from a user who was merely logged on. If attribution is uncertain, say so.
 
 ### Examine the transfer
 - Determine whether the activity is ongoing. Preserve relevant logs and identifiers needed for follow-up. (Also contributes to scope evaluation)
   - Time the suspected transfer was initiated: 
-  - Check remote traffic since that time: `` \`sp_endpoint_connections({{SRC_IP}},{{DEST_IP}})\` ``
-  - Check internal traffic since that time: `` \`sp_network_connections({{SRC_IP}},{{DEST_IP}})\` ``
+  - Check remote traffic since that time: `` `sp_endpoint_connections({{SRC_IP}},{{DEST_IP}})` ``
+  - Check internal traffic since that time: `` `sp_network_connections({{SRC_IP}},{{DEST_IP}})` ``
 
 ### Assess the destination and normal activity associated with that destination
 - Identify the destination IPs owner and purpose, if not included in the alert. 
