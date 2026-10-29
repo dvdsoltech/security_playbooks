@@ -4,15 +4,24 @@
 
 # Validate & Scope Data Exfiltration Alert
 ## Check Alert Details
-### Ensure relevant information is recorded
-Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere.
-- Alert time, time range, source, rule name, and triggering condition
-- Source hostname, IP, and ports
-  - If numerous high ports, just mention numerous high ports
-  - Resolve IPs to hostnames where needed: `index=windns <ip> earliest=-30d latest=now | table query answer`
-- Destination hostname, IP, ports, protocols, domain, and URL
-- Bytes in/out, connection count, and connection duration
-- Associated identity
+### Ensure relevant information is recorded and fill in gaps
+Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
+- Source IP
+  - Query: IP Resolution: `\`sp_dns_index\` \`sp_dns_query({src_ip})\``
+- Source Hostname
+  - Query: Hostname Resolution: `\`sp_dns_index\` \`sp_dns_query({src_dns})\``
+- Source Port and Protocol
+  - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
+- Destination IP
+  - Destination IP Resolution Query `\`sp_dns_index\` \`sp_dns_query({dest_ip})\``
+- Destination Hostname
+  - Query: Hostname Resolution: `\`sp_dns_index\` \`sp_dns_query({dest_dns})\``
+- Destination Ports and Protocol
+  - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
+- Identity
+- Time Range
+- Bytes in/out
+- Alert Source
 - Any reported file names, paths, object names, content types, or data-classification labels
 - Whether the alert describes a completed transfer, an attempted transfer, or suspected unconfirmed transfer
 
