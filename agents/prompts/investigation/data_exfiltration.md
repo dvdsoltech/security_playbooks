@@ -13,15 +13,15 @@ Where the agent's supplemental querying is uniquely beneficial is in scoping and
 ### Ensure relevant information is recorded and fill in gaps
 Record the following information from the alert: source ip, source hostname, source port/protocol, destination ip, destination hostname, destination port/protocol, identity, time range, bytes in, bytes out, alert source, transfer content, and transfer status. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
 - Source IP
-  - Query: IP Resolution: `` `sp_dns_index` `sp_dns_query({{SRC_IP}})` ``
+  - Query: IP Resolution (internal IP): `` `sp_dns_index` `sp_dns_query({{SRC_IP}})` ``
 - Source Hostname
-  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({{SRC_DNS}})` ``
+  - Query: Hostname Resolution (internal DNS): `` `sp_dns_index` `sp_dns_query({{SRC_DNS}})` ``
 - Source Port and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Destination IP
-  - Destination IP Resolution Query `` `sp_dns_index` `sp_dns_query({{DEST_IP}})` ``
+  - Destination IP Resolution Query (internal IP): `` `sp_dns_index` `sp_dns_query({{DEST_IP}})` ``
 - Destination Hostname
-  - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({{DEST_DNS}})` ``
+  - Query: Hostname Resolution (internal IP): `` `sp_dns_index` `sp_dns_query({{DEST_DNS}})` ``
 - Destination Ports and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
 - Identity:
