@@ -109,13 +109,17 @@ Record the following information from the alert. If a data point is missing, not
 
 ## Report
 
-- **Classification:** threat, benign, or unknown
+- **Disposition:**
+  - Benign: expected or routine activity
+  - True Positive: Benign but risky
+  - Uncertain: not enough information
+  - Attack: threat observed
 - **Severity:** low, medium, high, or critical
-- **Confidence:** 1–10
 - **Transfer status:** confirmed, attempted, or unconfirmed
+  - If available, what was transferred
 - **Recommended action:** 
-  - Escalate: to CSIRT member for confirmation (threat or benign)
-  - Contain source entity and identity
+  - Escalate: 
+  - Contain source entity and identity:
     - If transfer is ongoing or sensitive data loss is strongly indicated, escalate and highlight recommendation for containment procedures. (Consider the evidence-preservation and impact of blocking a destination, account, or process given the entity, identity, and file data gathered from the analysis)
   - Monitor: 
   - Suppress: only when the specific workflow has been validated and the suppression conditions are narrow enough to retain visibility into deviations.
