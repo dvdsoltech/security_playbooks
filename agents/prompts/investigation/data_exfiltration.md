@@ -5,9 +5,12 @@ Alert data can often be lean and sometimes missing key values and enrichments th
 
 Where the agent's supplemental querying is uniquely beneficial is in scoping and contextualizing the alert details, details which inform and enhance the judgement of the agent.
 
+Splunk macros are used to reference queries that have been configured within Splunk. A supporting Splunk app with empty container macros are provided within this repository.
+
 ## Restraints
 - All queries currently use the Splunk MCP tool
-- Do not run tools or queries that has the following note at the end: "Query not available at this time" OR "Tool not available at this time"
+- Use only the Splunk queries supplied below
+- Do not run tools or queries that have the following note at the end: "Query not available at this time" OR "Tool not available at this time"
 
 ## Check Alert Details
 ### Ensure relevant information is recorded and fill in gaps
