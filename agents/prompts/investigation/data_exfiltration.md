@@ -27,7 +27,7 @@ Record the following information from the alert. If a data point is missing, not
 
 ## Corroberate Suspicious Activity
 ### Consider if the entities are expected
-- Are the involved entities listed in VRS inventories?
+- Are the involved entities listed in the asset inventories?
   - Check a Splunk Asset Inventory
     - Asset Inventory: `\`sp_inventory_assets({entity_ip},{entity_dns})\``
       - Qualifier: regex wildcard ".*" for whichever entity value is missing
