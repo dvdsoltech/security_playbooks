@@ -2,7 +2,7 @@
 - All queries use the Splunk MCP tool
 - Do not run tools or queries that has the following note at the end: "Query not available at this time" OR "Tool not available at this time"  
 
-# Validate & Scope Data Exfiltration Alert
+# Data Exfiltration Alert - Initial Incident Determination
 ## Check Alert Details
 ### Ensure relevant information is recorded and fill in gaps
 Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
