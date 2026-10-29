@@ -1,6 +1,6 @@
 # Restraints
-- All queries use the Splunk MCP tool
-- Do not run tools or queries that has the following note at the end: "Query not available at this time" OR "Tool not available at this time"  
+- All queries currently use the Splunk MCP tool
+- Do not run tools or queries that has the following note at the end: "Query not available at this time" OR "Tool not available at this time"
 
 # Data Exfiltration Alert - Initial Incident Determination
 ## Check Alert Details
@@ -55,18 +55,18 @@ Record the following information from the alert: source ip, source hostname, sou
   - Check internal traffic since that time: `` \`sp_network_connections({{SRC_IP}},{{DEST_IP}})\` ``
 
 ### Assess the destination and normal activity associated with that destination
-- Identify the destination’s owner and purpose, if not included in the alert. 
-  - Whois for IP ownership
+- Identify the destination IPs owner and purpose, if not included in the alert. 
+  - Whois for IP ownership  (**Tool not available at this time**)
 - Determine whether it is an approved business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
+  -  (**Tool not available at this time**)
 - Consider whether it is a common business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
-
+  -  (**Tool not available at this time**)
 
 ### Attribute activity to processes and data
-- Identify the process attributable to the connections `` \`sp_windows_process_connections({{SRC_DNS}}) \` ``
-- Further validate process execution within Windows Event Logs if process identified in the previous step: `` \`sp_windows_process_4688_4689({{PROCESS_NAME}},{{SRC_DNS}})\` ``
+- Identify the process attributable to the connections `` \`sp_windows_process_connections({{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}}) \` ``
+- Further validate process execution within Windows Event Logs if process identified in the previous step: `` \`sp_windows_process_4688_4689({{PROCESS_NAME}},{{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})\` ``
 - See if you can reconcile the two sources above to support process attribution and report as a single correlated summary.
-- Look for relevant preparation or access activity from an identified host logs: file reads, archive creation, compression, staging, or use of transfer tools: `index=wineventlog`
-- Correlate network, process, file, and identity timestamps. Report **observed file transfer** only when evidence links the files to the transfer; otherwise describe them as potentially related activity.
+- Look for relevant preparation or access activity from an identified host logs: file reads, archive creation, compression, staging, or use of transfer tools: `` `sp_windows_wineventlogs_all({{SRC_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 
 ### Check authorization and/or business context (RAG case)
 - Is there an approved system workflow, scheduled job, ticket, or change record explaining the transfer?
