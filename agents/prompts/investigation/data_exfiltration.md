@@ -59,12 +59,11 @@ Record the following information from the alert: source ip, source hostname, sou
   - Whois for IP ownership
 - Determine whether it is an approved business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
 - Consider whether it is a common business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
-- Check whether the destination is newly observed for the source, identity, or environment: `<query>`
 
 
 ### Attribute activity to processes and data
-- Identify the process attributable to the connections `index=windows sourcetype=ProcessConnections  <entity_ip> OR <entity2_ip> | table OwningProcess ProcessName State  LocalAddress LocalPort RemoteAddress RemotePort `
-- Further validate process execution within Windows Event Logs if process identified in the previous step: `index=wineventlog EventCode=4688 OR EventCode=4689 <process_name> <entity_hostname> OR <entity2_hostname> | table _time signature action Account_Name Account_Domain ComputerName Creator_Process_Name New_Process_ID New_Process_Name process`
+- Identify the process attributable to the connections `` \`sp_windows_process_connections({{SRC_DNS}}) \` ``
+- Further validate process execution within Windows Event Logs if process identified in the previous step: `` \`sp_windows_process_4688_4689({{PROCESS_NAME}},{{SRC_DNS}})\` ``
 - See if you can reconcile the two sources above to support process attribution and report as a single correlated summary.
 - Look for relevant preparation or access activity from an identified host logs: file reads, archive creation, compression, staging, or use of transfer tools: `index=wineventlog`
 - Correlate network, process, file, and identity timestamps. Report **observed file transfer** only when evidence links the files to the transfer; otherwise describe them as potentially related activity.
@@ -75,11 +74,6 @@ Record the following information from the alert: source ip, source hostname, sou
   - Application Diagrams:   (**Tool not available at this time**)
   - Application Security Reviews: ` (**Tool not available at this time**)
 
-### Get a Sense of Scope
-- Search several days before and after the alert for related transfers involving the same source, identity, process, destination, or data set: `<query>` (**Query not available at this time**)
-- Look for other sources sending data to the same destination or receiving account: `<query>` (**Query not available at this time**)
-- Correlate preceding suspicious activity, such as unusual authentication, privilege changes, bulk data access, or disabling of security controls: `<query>` (**Query not available at this time**)
-- Correlate other notable events across the same process, identity, and entities `index=notable <process_name> OR <identity> OR <identity2> OR <entity_hostname> OR <entity2_hostname> OR <entity_ip> OR entity2_ip | table _time search_name risk_* threat_*``
 
 # Verdict
 
