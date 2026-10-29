@@ -5,7 +5,7 @@
 # Data Exfiltration Alert - Initial Incident Determination
 ## Check Alert Details
 ### Ensure relevant information is recorded and fill in gaps
-Record the following information from the alert. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
+Record the following information from the alert: source ip, source hostname, source port/protocol, destination ip, destination hostname, destination port/protocol, identity, time range, bytes in, bytes out, alert source, transfer content, and transfer status. If a data point is missing, note it as an alert-tuning request rather than assuming it is unavailable elsewhere. Run the Splunk DNS resolution queries if needed.
 - Source IP
   - Query: IP Resolution: `` `sp_dns_index` `sp_dns_query({{SRC_IP}})` ``
 - Source Hostname
@@ -18,12 +18,12 @@ Record the following information from the alert. If a data point is missing, not
   - Query: Hostname Resolution: `` `sp_dns_index` `sp_dns_query({{DEST_DNS}})` ``
 - Destination Ports and Protocol
   - Qualifier: If more then 10 high ports and only high ports, just insert "multiple_high_ports"
-- Identity
-- Time Range
-- Bytes in/out
-- Alert Source
-- Any reported file names, paths, object names, content types, or data-classification labels
-- Whether the alert describes a completed transfer, an attempted transfer, or suspected unconfirmed transfer
+- Identity:
+- Time Range:
+- Bytes in/out:
+- Alert Source:
+- Transfer Content: Any reported file names, paths, object names, content types, or data-classification labels
+- Transfer Status: Whether the alert describes a completed transfer, an attempted transfer, or suspected unconfirmed transfer
 
 ## Corroberate Suspicious Activity
 ### Consider if the entities are expected
@@ -31,6 +31,7 @@ Record the following information from the alert. If a data point is missing, not
   - Check a Splunk Asset Inventory
     - Asset Inventory: `` \`sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})\` ``
       - Qualifier: regex wildcard ".*" for whichever entity value is missing
+- Is the source entity from a remote device?: `` \`sp_remote_managed_entity({{SRC_IP}})\` ``
 - If so, find the operating system and infer the likeliest system function of the entity as gathered by the inventories
 - If not included in the alert, infer the priority of the entity in context of its assumed function and operating system within the environment
 - Get associated owner, contact, administator if included
@@ -47,19 +48,11 @@ Record the following information from the alert. If a data point is missing, not
   - Linux Local Accounts (**Query not available at this time**)
   - Distinguish the account that initiated a process from a user who was merely logged on. If attribution is uncertain, say so.
 
-### Consider if network traffic is normal
-- Determine whether the system routinely handles sensitive data or makes outbound transfers.
-- History of this specific traffic as seen in the logs
-  - Palo Alto `index=paloalto <entity_ip> <entity2_ip>  earliest=-7d  latest=now  | stats count dc(src_port) as src_port by src_ip dest_ip dest_port action `
-  - MixMode: `API getLogs or getIndicator` request
-- History of this specific connection as stored in alert history
-  - MixMode: `index=mixmode <entity_ip> <entity2_ip>  earliest=-30d | stats count values(mitreTacticId) as mitreTacticId values(mitreTacticName) as mitreTacticName  by alertName `
-- History of this specific connection referenced in knowledge stores (**Tool not available at this time**)
-- Absent alert disclosure, does this traffic look normal based on the judgment of the analyst (Thinking of industry standard best practices and well known security controls)
-- Assign a verdict of likely or not-likely normal traffic. 
-
 ### Examine the transfer
 - Determine whether the activity is ongoing. Preserve relevant logs and identifiers needed for follow-up. (Also contributes to scope evaluation)
+  - Time the suspected transfer was initiated: 
+  - Check remote traffic since that time: `` \`sp_endpoint_connections({{SRC_IP}},{{DEST_IP}})\` ``
+  - Check internal traffic since that time: `` \`sp_network_connections({{SRC_IP}},{{DEST_IP}})\` ``
 
 ### Assess the destination and normal activity associated with that destination
 - Identify the destination’s owner and purpose, if not included in the alert. 
@@ -67,7 +60,6 @@ Record the following information from the alert. If a data point is missing, not
 - Determine whether it is an approved business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
 - Consider whether it is a common business partner, sanctioned SaaS service, corporate cloud tenant, or unknown external endpoint.
 - Check whether the destination is newly observed for the source, identity, or environment: `<query>`
-
 
 
 ### Attribute activity to processes and data
