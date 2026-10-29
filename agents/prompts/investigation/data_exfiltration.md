@@ -25,18 +25,16 @@ Record the following information from the alert. If a data point is missing, not
 - Any reported file names, paths, object names, content types, or data-classification labels
 - Whether the alert describes a completed transfer, an attempted transfer, or suspected unconfirmed transfer
 
-## Corroborate Suspicious Activity
+## Corroberate Suspicious Activity
 ### Consider if the entities are expected
 - Are the involved entities listed in VRS inventories?
-  - Check Splunk VRS Asset Inventory
-    - VRS List:   `| inputlookup vrs_assets | where like(dns,"<entity_hostname>%") OR match(ip,"<entity_ip>") | table dns ip_static function description contact owner priority app env`
-    - Crowdstrike: `| inputlookup vrs_assets_crowdstrike | where like(dns,"<entity_hostname>%") OR match(ip,"<entity_ip>")  OR match(ip_static,"<entity_ip>")| table dns ip ip_static last_seen mac os owner`
-    - LDAP: `| inputlookup vrs_assets_ldap   | where like(dns,"<entity_hostname>%") | table dns domain os description lastLogonTimestamp`
-    - Rapid 7 Agent: `| inputlookup vrs_assets_rapid7 | where like(dns,"<entity_hostname>%") OR match(ip,"<entity_ip>")  OR match(ip_static,"<entity_ip>") | table dns domain ip ip_static is_expected mac os vulnerabilities_critical vulnerabilities_severe vulnerabilities_high context`
+  - Check a Splunk Asset Inventory
+    - Asset Inventory: `\`sp_inventory_assets({entity_ip},{entity_dns})\``
+      - Qualifier: regex wildcard ".*" for whichever entity value is missing
 - If so, find the operating system and infer the likeliest system function of the entity as gathered by the inventories
 - If not included in the alert, infer the priority of the entity in context of its assumed function and operating system within the environment
 - Get associated owner, contact, administator if included
-- If entity is not included in any official VRS inventory, note the distinction
+- If entity is not included in any official inventory, note the absence.
 
 ### Associate identities with the entities
 - Infer an account from the hostname if the system has a workstation operating system. VRS tends to assign hostnames that have a matching pattern with the assigned user's account name.
