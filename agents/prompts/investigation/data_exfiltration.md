@@ -41,7 +41,7 @@ Record the following information from the alert: source ip, source hostname, sou
 ### Consider if the entities are expected
 - Are the involved entities listed in the asset inventories?
   - If not, check a Splunk Asset Inventory
-    - Asset Inventory: `` `sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})` ``
+    - Asset Inventory: `` |`sp_inventory_assets({{ENTITY_IP}},{{ENTITY_DNS}})` ``
       - Qualifier: regex wildcard ".*" for whichever entity value is missing
 - Is the source entity from a remote device?: `` `sp_remote_managed_entity({{SRC_IP}})` ``
 - If so, find the operating system and infer the likeliest system function of the entity as gathered by the inventories
