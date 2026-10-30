@@ -55,7 +55,7 @@ Record the following information from the alert: source ip, source hostname, sou
   - Windows Event Logs: `` `sp_windows_4624({{ENTITY_DNS}},{{EARLIEST_EPOCH_TIME}},{{LATEST_EPOCH_TIME}})` ``
 - Do a best-effort deduplication from the above two steps.
 - Validate the identities by checking the following identity stores
-  - Identity Inventory: `` `sp_inventory_identities({{IDENTITY}})` ``
+  - Identity Inventory: `` |`sp_inventory_identities({{IDENTITY}})` ``
   - Windows Local Accounts `` `sp_windows_local_accounts{{IDENTITY}}` `` 
   - Linux Local Accounts (**Query not available at this time**)
   - Distinguish the account that initiated a process from a user who was merely logged on. If attribution is uncertain, say so.
